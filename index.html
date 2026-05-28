@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Konecranes Innovation — Idea Rain</title>
+
   <style>
     :root{
       --bg1:#07111f;
@@ -100,6 +101,7 @@
       text-shadow: 0 0 16px rgba(255,93,108,.25);
     }
 
+    /* ✅ IMPORTANT: overlay scroll fix (no more clipped shop) */
     .overlay{
       position:absolute;
       inset:0;
@@ -109,9 +111,13 @@
       padding:18px;
       background: radial-gradient(1000px 600px at 50% 15%, rgba(0,0,0,.25), rgba(0,0,0,.70));
       backdrop-filter: blur(4px);
+
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
     }
     .overlay.show{ display:flex; }
 
+    /* ✅ panel never exceeds overlay height; scroll inside if needed */
     .panel{
       width:min(820px, 96%);
       border-radius:22px;
@@ -119,7 +125,11 @@
       border:1px solid rgba(255,255,255,.10);
       box-shadow: 0 22px 60px rgba(0,0,0,.55);
       padding:16px;
+
+      max-height: calc(100% - 36px);
+      overflow:auto;
     }
+
     .panel header{
       display:flex;
       justify-content:space-between;
@@ -208,6 +218,7 @@
       opacity:.55;
       filter:saturate(.7);
     }
+
     .badge{
       display:inline-flex;
       align-items:center;
@@ -221,13 +232,22 @@
       font-variant-numeric: tabular-nums;
       margin-left:8px;
     }
+
+    /* ✅ sticky footer actions so buttons never disappear */
     .footerActions{
       margin-top:12px;
       display:flex;
       gap:10px;
       justify-content:flex-end;
       flex-wrap:wrap;
+
+      position: sticky;
+      bottom: 0;
+      padding: 12px 0 2px 0;
+      background: rgba(10,16,26,.92);
+      border-top: 1px solid rgba(255,255,255,.08);
     }
+
     .tiny{
       font-size:12px;
       color:var(--muted);
@@ -236,6 +256,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <canvas id="c"></canvas>
@@ -278,29 +299,12 @@
 (() => {
   // ========= utils =========
   const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
-  const lerp = (a,b,t)=>a+(b-a)*t;
   const rand = (a,b)=>a+Math.random()*(b-a);
-  const randi = (a,b)=>Math.floor(rand(a,b+1));
 
   // ========= canvas =========
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
-
   let W = 900, H = 560, DPR = 1;
-
-  function resize(){
-    const rect = canvas.getBoundingClientRect();
-    DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    canvas.width = Math.floor(rect.width * DPR);
-    canvas.height = Math.floor(rect.height * DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    W = rect.width;
-    H = rect.height;
-
-    // Regenerate platforms on resize (keeps layout consistent)
-    platforms = generatePlatforms(state.round);
-  }
-  window.addEventListener("resize", resize);
 
   // ========= DOM =========
   const roundTxt = document.getElementById("roundTxt");
@@ -333,16 +337,23 @@
     totalCoinsEarned: 0,
 
     upgrades: {
-      tppsIndia: false,   // more ideas per second
-      focusThemes: false, // more good ideas
-      patentor: false     // more diamond ideas
+      tppsIndia: false,
+      focusThemes: false,
+      patentor: false
     },
 
     playing: true,
     timeLeft: ROUND_TIME,
 
     collected: { bad:0, good:0, diamond:0 },
-    missed: 0
+    missed: 0,
+
+    // ✅ payout fix: store current year payout and apply only once
+    yearEnd: {
+      active: false,
+      payoutApplied: false,
+      payoutCoins: 0
+    }
   };
 
   // ========= input =========
@@ -377,41 +388,47 @@
   let t = 0;
 
   function groundY(){
-    return H - 52; // visual ground height margin
+    return H - 52;
   }
+
+  // ========= resize =========
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    canvas.width = Math.floor(rect.width * DPR);
+    canvas.height = Math.floor(rect.height * DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    W = rect.width;
+    H = rect.height;
+
+    platforms = generatePlatforms(state.round);
+  }
+  window.addEventListener("resize", resize);
 
   // ========= platforms =========
   function generatePlatforms(round){
     const p = [];
     const gY = groundY();
-    // ground
-    p.push({ x:0, y:gY, w:W, h:H-gY });
+    p.push({ x:0, y:gY, w:W, h:H-gY }); // ground
 
-    // Some catching platforms (helps you reach higher falling ideas)
     const baseY = gY - 80;
     const drift = (round-1) * 6;
 
-    p.push({ x: 60, y: baseY - 0 - drift, w: 170, h: 18 });
-    p.push({ x: 280, y: baseY - 70 - drift, w: 170, h: 18 });
-    p.push({ x: 520, y: baseY - 35 - drift, w: 190, h: 18 });
+    p.push({ x: 60,  y: baseY - 0   - drift, w: 170, h: 18 });
+    p.push({ x: 280, y: baseY - 70  - drift, w: 170, h: 18 });
+    p.push({ x: 520, y: baseY - 35  - drift, w: 190, h: 18 });
     p.push({ x: 740, y: baseY - 110 - drift, w: 140, h: 18 });
-
-    // One mid “cloud” platform
     p.push({ x: W*0.38, y: gY - 210 - drift, w: 220, h: 18 });
 
     return p;
   }
 
-  // ========= idea rain tuning (makes it impossible to get them all) =========
+  // ========= idea rain tuning =========
   function spawnConfig(){
-    // Spawn rate intentionally high
-    let rate = 5.2 + (state.round-1) * 0.9; // ideas per second (round scaling)
-    if (state.upgrades.tppsIndia) rate += 2.2; // even more ideas
+    let rate = 5.2 + (state.round-1) * 0.9;  // intentionally high
+    if (state.upgrades.tppsIndia) rate += 2.2;
 
-    // Type probabilities
-    let badP = 0.62;
-    let goodP = 0.33;
-    let diaP = 0.05;
+    let badP = 0.62, goodP = 0.33, diaP = 0.05;
 
     if (state.upgrades.focusThemes){ goodP += 0.18; badP -= 0.18; }
     if (state.upgrades.patentor){ diaP += 0.08; badP -= 0.05; goodP -= 0.03; }
@@ -422,7 +439,6 @@
     const sum = badP + goodP + diaP;
     badP/=sum; goodP/=sum; diaP/=sum;
 
-    // Falling speed increases slightly each round
     const fallMin = 240 + (state.round-1)*18;
     const fallMax = 420 + (state.round-1)*24;
 
@@ -440,29 +456,29 @@
     const type = pickIdeaType(cfg);
     const r = (type === "diamond") ? 16 : 14;
 
-    // spawn above view, random x
-    const x = rand(20, W-20);
-    const y = -rand(30, 120);
-
-    const vy = rand(cfg.fallMin, cfg.fallMax);
-    const vx = rand(-45, 45); // slight drift
-    const phase = Math.random() * Math.PI * 2;
-
-    ideas.push({ x, y, vx, vy, r, type, phase });
+    ideas.push({
+      x: rand(20, W-20),
+      y: -rand(30, 120),
+      vx: rand(-45, 45),
+      vy: rand(cfg.fallMin, cfg.fallMax),
+      r,
+      type,
+      phase: Math.random() * Math.PI * 2
+    });
   }
 
   // ========= collisions =========
-  function aabbIntersect(ax,ay,aw,ah, bx,by,bw,bh){
+  function aabb(ax,ay,aw,ah, bx,by,bw,bh){
     return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
   }
 
-  function resolvePlayerCollisions(dt){
+  function resolvePlayer(dt){
     player.onGround = false;
 
     // X
     player.x += player.vx * dt;
     for (const pl of platforms){
-      if (aabbIntersect(player.x, player.y, player.w, player.h, pl.x, pl.y, pl.w, pl.h)){
+      if (aabb(player.x, player.y, player.w, player.h, pl.x, pl.y, pl.w, pl.h)){
         if (player.vx > 0) player.x = pl.x - player.w;
         else if (player.vx < 0) player.x = pl.x + pl.w;
         player.vx = 0;
@@ -472,7 +488,7 @@
     // Y
     player.y += player.vy * dt;
     for (const pl of platforms){
-      if (aabbIntersect(player.x, player.y, player.w, player.h, pl.x, pl.y, pl.w, pl.h)){
+      if (aabb(player.x, player.y, player.w, player.h, pl.x, pl.y, pl.w, pl.h)){
         if (player.vy > 0){
           player.y = pl.y - player.h;
           player.vy = 0;
@@ -487,7 +503,6 @@
 
     player.x = clamp(player.x, 0, W - player.w);
     if (player.y > H + 160){
-      // fell off (rare), reposition
       player.x = 80;
       player.y = groundY() - player.h - 10;
       player.vx = 0;
@@ -496,7 +511,7 @@
     }
   }
 
-  // ========= catching & missing =========
+  // ========= catching =========
   function checkCatch(){
     const px = player.x + player.w/2;
     const py = player.y + player.h/2;
@@ -504,11 +519,9 @@
 
     for (let i=ideas.length-1; i>=0; i--){
       const it = ideas[i];
-      const dx = it.x - px;
-      const dy = it.y - py;
+      const dx = it.x - px, dy = it.y - py;
       const rr = it.r + catchR;
       if (dx*dx + dy*dy < rr*rr){
-        // caught
         state.collected[it.type]++;
         state.totalIdeas++;
         ideas.splice(i,1);
@@ -533,7 +546,7 @@
     timerTxt.classList.toggle("danger", state.timeLeft <= 7);
   }
 
-  // ========= shop overlay =========
+  // ========= shop overlay (BUG FIXED) =========
   function shopRowHTML(title, desc, cost, key){
     const owned = state.upgrades[key];
     const affordable = state.wallet >= cost;
@@ -550,23 +563,8 @@
     `;
   }
 
-  function buyUpgrade(key){
-    const costs = { tppsIndia:50, focusThemes:50, patentor:100 };
-    const cost = costs[key] ?? 99999;
-    if (state.upgrades[key]) return;
-    if (state.wallet < cost) return;
-    state.wallet -= cost;
-    state.upgrades[key] = true;
-    showYearEndShop(); // rerender
-  }
-
-  function showYearEndShop(){
-    state.playing = false;
-
-    const earned = coinsFromCollected(state.collected);
-    state.wallet += earned;
-    state.totalCoinsEarned += earned;
-
+  function renderYearEndOverlay(){
+    const earned = state.yearEnd.payoutCoins; // already computed
     panel.innerHTML = `
       <header>
         <div>
@@ -640,8 +638,7 @@
       </div>
     `;
 
-    overlay.classList.add("show");
-
+    // hook buy buttons
     for (const key of ["tppsIndia","focusThemes","patentor"]){
       const btn = document.getElementById(`buy_${key}`);
       if (btn) btn.addEventListener("click", ()=>buyUpgrade(key));
@@ -655,7 +652,40 @@
         resetRound();
       }
     });
+  }
 
+  function showYearEnd(){
+    state.playing = false;
+    state.yearEnd.active = true;
+
+    // ✅ payout computed and applied ONCE
+    if (!state.yearEnd.payoutApplied){
+      const earned = coinsFromCollected(state.collected);
+      state.yearEnd.payoutCoins = earned;
+
+      state.wallet += earned;
+      state.totalCoinsEarned += earned;
+
+      state.yearEnd.payoutApplied = true;
+    }
+
+    renderYearEndOverlay();
+    overlay.classList.add("show");
+    updateHud();
+  }
+
+  function buyUpgrade(key){
+    const costs = { tppsIndia:50, focusThemes:50, patentor:100 };
+    const cost = costs[key] ?? 99999;
+    if (state.upgrades[key]) return;
+    if (state.wallet < cost) return;
+
+    // ✅ buying only deducts coins and toggles flag (NO payouts here)
+    state.wallet -= cost;
+    state.upgrades[key] = true;
+
+    // re-render overlay WITHOUT changing wallet payout
+    renderYearEndOverlay();
     updateHud();
   }
 
@@ -665,9 +695,7 @@
       <header>
         <div>
           <h2>5 Years Completed — Innovation Program Summary</h2>
-          <div class="sub">
-            Final results of your innovation idea-catching sprint.
-          </div>
+          <div class="sub">Final results of your innovation idea-catching sprint.</div>
         </div>
         <div class="pill" style="pointer-events:none;">
           <span class="dot"></span>
@@ -682,9 +710,7 @@
             <li><b>Total ideas gathered</b>: ${state.totalIdeas}</li>
             <li><b>Total coins earned</b>: ${state.totalCoinsEarned}</li>
           </ul>
-          <div class="tiny">
-            Your core score is ideas gathered: <b>${state.totalIdeas}</b>.
-          </div>
+          <div class="tiny">Your core score is ideas gathered: <b>${state.totalIdeas}</b>.</div>
         </div>
 
         <div class="card">
@@ -697,11 +723,8 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:12px;">
-        <h3>Play Again?</h3>
-        <div class="footerActions">
-          <button class="btn secondary" id="btnReplay2">Restart</button>
-        </div>
+      <div class="footerActions">
+        <button class="btn secondary" id="btnReplay2">Restart</button>
       </div>
     `;
     overlay.classList.add("show");
@@ -715,6 +738,7 @@
     state.totalIdeas = 0;
     state.totalCoinsEarned = 0;
     state.upgrades = { tppsIndia:false, focusThemes:false, patentor:false };
+
     resetRound();
   }
 
@@ -730,7 +754,6 @@
   }
 
   function drawBackground(){
-    // stars / particles
     ctx.save();
     ctx.globalAlpha = 0.25;
     for (let i=0;i<46;i++){
@@ -741,7 +764,6 @@
     }
     ctx.restore();
 
-    // horizon glow
     ctx.save();
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "rgba(106,228,255,.10)");
@@ -761,15 +783,12 @@
       drawRoundedRect(pl.x, pl.y, pl.w, pl.h, 10);
       ctx.fill();
       ctx.stroke();
-
-      // top highlight
       ctx.fillStyle = "rgba(106,228,255,.06)";
       drawRoundedRect(pl.x+4, pl.y+3, pl.w-8, Math.max(6, pl.h*0.4), 8);
       ctx.fill();
       ctx.restore();
     }
 
-    // ground line
     ctx.save();
     ctx.strokeStyle = "rgba(255,255,255,.10)";
     ctx.lineWidth = 2;
@@ -780,7 +799,7 @@
     ctx.restore();
   }
 
-  // ✅ More obvious “light bulb” icon
+  // ✅ clear “light bulb” icon
   function drawBulb(x,y,scale,type,phase){
     let glow, glass;
     if (type === "bad"){
@@ -800,7 +819,7 @@
     ctx.translate(x,y);
     ctx.rotate(wobble);
 
-    // outer glow
+    // glow
     ctx.globalAlpha = 0.60;
     ctx.fillStyle = glow;
     ctx.beginPath();
@@ -833,14 +852,14 @@
     ctx.quadraticCurveTo(0, 5*scale, 5*scale, -1*scale);
     ctx.stroke();
 
-    // base (metal)
+    // base
     ctx.fillStyle = "rgba(0,0,0,.28)";
     drawRoundedRect(-8*scale, 12*scale, 16*scale, 8*scale, 3*scale);
     ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.10)";
     ctx.stroke();
 
-    // diamond sparkle
+    // sparkle for diamond
     if (type === "diamond"){
       ctx.save();
       ctx.globalAlpha = 0.55;
@@ -865,8 +884,8 @@
 
   function drawPlayer(){
     const x = player.x, y = player.y;
-
     ctx.save();
+
     // shadow
     ctx.globalAlpha = 0.25;
     ctx.fillStyle = "black";
@@ -917,6 +936,11 @@
     ideas = [];
     spawnAcc = 0;
 
+    // reset year-end payout flags for new round
+    state.yearEnd.active = false;
+    state.yearEnd.payoutApplied = false;
+    state.yearEnd.payoutCoins = 0;
+
     platforms = generatePlatforms(state.round);
 
     player.x = 80;
@@ -943,7 +967,7 @@
     if (state.timeLeft <= 0){
       state.timeLeft = 0;
       updateHud();
-      showYearEndShop();
+      showYearEnd();
       return;
     }
 
@@ -966,57 +990,48 @@
     // gravity
     player.vy += GRAVITY * dt;
 
-    // coyote
+    // coyote time
     if (player.onGround) player.coyote = COYOTE;
     else player.coyote = Math.max(0, player.coyote - dt);
 
     // jump buffer
     jumpBuffer = Math.max(0, jumpBuffer - dt);
-    const wantsJump = jumpBuffer > 0;
-    if (wantsJump && (player.onGround || player.coyote > 0)){
+    if (jumpBuffer > 0 && (player.onGround || player.coyote > 0)){
       player.vy = -JUMP_V;
       player.onGround = false;
       player.coyote = 0;
       jumpBuffer = 0;
     }
 
-    resolvePlayerCollisions(dt);
+    resolvePlayer(dt);
 
-    // ✅ Idea rain spawning
+    // idea rain
     const cfg = spawnConfig();
     spawnAcc += dt * cfg.rate;
-
-    // spawn multiple per frame if needed (keeps rate consistent)
     while (spawnAcc >= 1){
       spawnIdea(cfg);
       spawnAcc -= 1;
     }
 
-    // update falling ideas
+    // update ideas
     const gY = groundY();
     for (let i=ideas.length-1; i>=0; i--){
       const it = ideas[i];
-
-      // slight wind sway
       const wind = Math.sin(t*1.5 + it.phase) * 22;
 
       it.x += (it.vx + wind) * dt;
       it.y += it.vy * dt;
 
-      // clamp and bounce at edges
       if (it.x < 10){ it.x = 10; it.vx *= -0.4; }
       if (it.x > W-10){ it.x = W-10; it.vx *= -0.4; }
 
-      // missed if hits ground
       if (it.y > gY - it.r){
         state.missed++;
         ideas.splice(i,1);
       }
     }
 
-    // catch
     checkCatch();
-
     updateHud();
   }
 
@@ -1041,8 +1056,8 @@
   resize();
   resetRound();
   requestAnimationFrame(loop);
+
 })();
 </script>
 </body>
 </html>
-``
