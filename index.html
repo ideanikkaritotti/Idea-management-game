@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tuukka's Thesis Quest</title>
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+        }
+        canvas {
+            display: block;
+            border: 3px solid #e94560;
+            border-radius: 4px;
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+        #startScreen, #endScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(26, 26, 46, 0.95);
+            color: #fff;
+            z-index: 10;
+        }
+        #endScreen {
+            display: none;
+        }
+        h1 {
+            font-size: 36px;
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: #ccc;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+        .start-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #e94560;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: transform 0.1s;
+        }
+        .start-btn:hover {
+            transform: scale(1.05);
+        }
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+        .controls {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #aaa;
+            text-align: center;
+        }
+        .grade {
+            font-size: 72px;
+            margin: 20px 0;
+        }
+        .stats {
+            font-size: 16px;
+            color: #ccc;
+            margin: 5px 0;
+        }
+</style>
+</head>
+<body>
+<div id="gameContainer">
+<canvas id="game" width="800" height="500"></canvas>
+<div id="ui">
+<div id="articles">📄 Articles: 0</div>
+<div id="interviews">🎤 Interviews: 0</div>
+<div id="thesisLength">📜 Thesis: 0 pages</div>
+<div id="timer">⏱ Time: 0s</div>
+</div>
+<div id="startScreen">
+<h1>🎓 Tuukka's Thesis Quest</h1>
+<p class="subtitle">Help Tuukka collect articles 📄 and interviews 🎤 to build the ultimate thesis!<br>Run fast and collect everything for the best grade!</p>
+<button class="start-btn" onclick="startGame()">START</button>
+<div class="controls">
+                ← → or A/D to move &nbsp;|&nbsp; SPACE or W to jump
+</div>
+</div>
+<div id="endScreen">
+<h1>📜 Thesis Submitted!</h1>
+<div class="grade" id="gradeDisplay"></div>
+<div class="stats" id="statArticles"></div>
+<div class="stats" id="statInterviews"></div>
+<div class="stats" id="statPages"></div>
+<div class="stats" id="statTime"></div>
+<div class="stats" id="statComment" style="margin-top:15px; color:#e94560; font-size:18px;"></div>
+<button class="start-btn" onclick="startGame()" style="margin-top:25px;">PLAY AGAIN</button>
+</div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
