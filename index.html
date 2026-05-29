@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,19 +31,18 @@
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       overflow:hidden;
-      padding: 14px;
+      padding:14px;
     }
 
-    /* ✅ Smaller and always visible */
     .wrap{
-      width: min(900px, 96vw);
-      height: min(560px, 86vh);
+      width:min(900px, 96vw);
+      height:min(560px, 86vh);
       position:relative;
       border-radius:24px;
       overflow:hidden;
-      box-shadow: var(--shadow);
+      box-shadow:var(--shadow);
       border:1px solid rgba(255,255,255,.08);
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
     }
 
     canvas{
@@ -65,6 +63,7 @@
       justify-content:space-between;
       pointer-events:none;
       flex-wrap:wrap;
+      z-index:10;
     }
     .hud .left, .hud .right{
       display:flex;
@@ -75,9 +74,9 @@
     .pill{
       padding:9px 11px;
       border-radius:999px;
-      background: var(--panel);
+      background:var(--panel);
       border:1px solid rgba(255,255,255,.08);
-      box-shadow: 0 10px 25px rgba(0,0,0,.22);
+      box-shadow:0 10px 25px rgba(0,0,0,.22);
       display:flex;
       gap:10px;
       align-items:center;
@@ -89,19 +88,18 @@
 
     .dot{
       width:10px; height:10px; border-radius:50%;
-      background: var(--accent);
-      box-shadow: 0 0 20px rgba(106,228,255,.35);
+      background:var(--accent);
+      box-shadow:0 0 20px rgba(106,228,255,.35);
     }
     .dot.good{ background:var(--good); box-shadow:0 0 18px rgba(255,210,74,.35); }
     .dot.bad{ background:var(--bad); box-shadow:0 0 16px rgba(154,166,178,.25); }
     .dot.diamond{ background:var(--diamond); box-shadow:0 0 18px rgba(111,240,255,.35); }
 
     .timer.danger{
-      color: var(--danger);
-      text-shadow: 0 0 16px rgba(255,93,108,.25);
+      color:var(--danger);
+      text-shadow:0 0 16px rgba(255,93,108,.25);
     }
 
-    /* ✅ IMPORTANT: overlay scroll fix (no more clipped shop) */
     .overlay{
       position:absolute;
       inset:0;
@@ -109,24 +107,22 @@
       align-items:center;
       justify-content:center;
       padding:18px;
-      background: radial-gradient(1000px 600px at 50% 15%, rgba(0,0,0,.25), rgba(0,0,0,.70));
-      backdrop-filter: blur(4px);
-
+      background:radial-gradient(1000px 600px at 50% 15%, rgba(0,0,0,.25), rgba(0,0,0,.70));
+      backdrop-filter:blur(4px);
       overflow:auto;
-      -webkit-overflow-scrolling: touch;
+      -webkit-overflow-scrolling:touch;
+      z-index:20;
     }
     .overlay.show{ display:flex; }
 
-    /* ✅ panel never exceeds overlay height; scroll inside if needed */
     .panel{
       width:min(820px, 96%);
       border-radius:22px;
-      background: rgba(10,16,26,.92);
+      background:rgba(10,16,26,.92);
       border:1px solid rgba(255,255,255,.10);
-      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+      box-shadow:0 22px 60px rgba(0,0,0,.55);
       padding:16px;
-
-      max-height: calc(100% - 36px);
+      max-height:calc(100% - 36px);
       overflow:auto;
     }
 
@@ -148,12 +144,12 @@
       font-size:13px;
       margin-top:4px;
       line-height:1.35;
-      max-width: 520px;
+      max-width:520px;
     }
 
     .grid{
       display:grid;
-      grid-template-columns: 1.1fr .9fr;
+      grid-template-columns:1.1fr .9fr;
       gap:12px;
       margin-top:12px;
     }
@@ -162,7 +158,7 @@
     }
     .card{
       border-radius:18px;
-      background: rgba(255,255,255,.05);
+      background:rgba(255,255,255,.05);
       border:1px solid rgba(255,255,255,.08);
       padding:13px;
     }
@@ -184,7 +180,7 @@
       gap:12px;
       padding:12px;
       border-radius:16px;
-      background: rgba(0,0,0,.18);
+      background:rgba(0,0,0,.18);
       border:1px solid rgba(255,255,255,.07);
       margin-top:10px;
     }
@@ -197,20 +193,20 @@
       border:0;
       border-radius:14px;
       padding:9px 11px;
-      background: rgba(106,228,255,.18);
-      color: var(--text);
+      background:rgba(106,228,255,.18);
+      color:var(--text);
       border:1px solid rgba(106,228,255,.35);
-      transition: transform .06s ease, background .15s ease;
+      transition:transform .06s ease, background .15s ease;
       font-weight:800;
       font-size:13px;
       min-width:120px;
       text-align:center;
       user-select:none;
     }
-    .btn:hover{ background: rgba(106,228,255,.25); }
-    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btn:hover{ background:rgba(106,228,255,.25); }
+    .btn:active{ transform:translateY(1px) scale(.99); }
     .btn.secondary{
-      background: rgba(255,255,255,.08);
+      background:rgba(255,255,255,.08);
       border:1px solid rgba(255,255,255,.12);
     }
     .btn:disabled{
@@ -225,7 +221,7 @@
       gap:8px;
       padding:6px 10px;
       border-radius:999px;
-      background: rgba(255,255,255,.06);
+      background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.08);
       font-size:12px;
       color:var(--muted);
@@ -233,19 +229,17 @@
       margin-left:8px;
     }
 
-    /* ✅ sticky footer actions so buttons never disappear */
     .footerActions{
       margin-top:12px;
       display:flex;
       gap:10px;
       justify-content:flex-end;
       flex-wrap:wrap;
-
-      position: sticky;
-      bottom: 0;
-      padding: 12px 0 2px 0;
-      background: rgba(10,16,26,.92);
-      border-top: 1px solid rgba(255,255,255,.08);
+      position:sticky;
+      bottom:0;
+      padding:12px 0 2px 0;
+      background:rgba(10,16,26,.92);
+      border-top:1px solid rgba(255,255,255,.08);
     }
 
     .tiny{
@@ -254,54 +248,29 @@
       line-height:1.4;
       margin-top:8px;
     }
+
+    #musicBtn{
+      position:absolute;
+      top:12px;
+      right:12px;
+      z-index:30;
+      min-width:auto;
+      padding:8px 12px;
+      border-radius:12px;
+      font-size:13px;
+      line-height:1;
+    }
   </style>
 </head>
-
 <body>
-  
-<audio id="bgMusic" loop>
-  <source src="bgMusic.mp3" type="audio/mpeg">
-  Your browser does not support the audio element.
-</audio>
-  
-<script>
-  const bgMusic = document.getElementById("bgMusic");
-  bgMusic.volume = 0.4; // optional
-
-  function startMusicOnce() {
-    bgMusic.play().catch(err => {
-      console.log("Music blocked until user interacts:", err);
-    });
-
-    document.removeEventListener("click", startMusicOnce);
-    document.removeEventListener("keydown", startMusicOnce);
-  }
-
-  document.addEventListener("click", startMusicOnce);
-  document.addEventListener("keydown", startMusicOnce);
-</script>
-
-<button onclick="toggleMusic()">🎵 Music On/Off</button>
-
-<audio id="bgMusic" loop>
-  <source src="assets/music/bgmusic.mp3" type="audio/mpeg">
-</audio>
-
-<script>
-  const bgMusic = document.getElementById("bgMusic");
-  bgMusic.volume = 0.4;
-
-  function toggleMusic() {
-    if (bgMusic.paused) {
-      bgMusic.play().catch(err => console.log(err));
-    } else {
-      bgMusic.pause();
-    }
-  }
-</script>
-
-
   <div class="wrap">
+    <button id="musicBtn" class="btn secondary" type="button">🎵 Music: Off</button>
+
+    <audio id="bgMusic" loop preload="auto">
+      <source src="Music.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+
     <canvas id="c"></canvas>
 
     <div class="hud">
@@ -340,16 +309,13 @@
 
 <script>
 (() => {
-  // ========= utils =========
   const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
   const rand = (a,b)=>a+Math.random()*(b-a);
 
-  // ========= canvas =========
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
   let W = 900, H = 560, DPR = 1;
 
-  // ========= DOM =========
   const roundTxt = document.getElementById("roundTxt");
   const walletTxt = document.getElementById("walletTxt");
   const badTxt = document.getElementById("badTxt");
@@ -359,8 +325,30 @@
   const timerTxt = document.getElementById("timerTxt");
   const overlay = document.getElementById("overlay");
   const panel = document.getElementById("panel");
+  const bgMusic = document.getElementById("bgMusic");
+  const musicBtn = document.getElementById("musicBtn");
 
-  // ========= game constants =========
+  bgMusic.volume = 0.35;
+
+  async function toggleMusic(){
+    try{
+      if (bgMusic.paused){
+        await bgMusic.play();
+        musicBtn.textContent = "🎵 Music: On";
+      } else {
+        bgMusic.pause();
+        musicBtn.textContent = "🎵 Music: Off";
+      }
+    } catch (err) {
+      console.log("Could not play music:", err);
+    }
+  }
+
+  musicBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleMusic();
+  });
+
   const GRAVITY = 2100;
   const MOVE_ACC = 3000;
   const MAX_SPEED = 480;
@@ -372,26 +360,20 @@
   const ROUND_TIME = 30.0;
   const TOTAL_ROUNDS = 5;
 
-  // ========= state =========
   const state = {
     round: 1,
     wallet: 0,
     totalIdeas: 0,
     totalCoinsEarned: 0,
-
     upgrades: {
       tppsIndia: false,
       focusThemes: false,
       patentor: false
     },
-
     playing: true,
     timeLeft: ROUND_TIME,
-
     collected: { bad:0, good:0, diamond:0 },
     missed: 0,
-
-    // ✅ payout fix: store current year payout and apply only once
     yearEnd: {
       active: false,
       payoutApplied: false,
@@ -399,7 +381,6 @@
     }
   };
 
-  // ========= input =========
   const keys = new Set();
   let jumpBuffer = 0;
 
@@ -412,7 +393,6 @@
 
   window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 
-  // ========= world & entities =========
   const player = {
     x: 80,
     y: 0,
@@ -434,7 +414,6 @@
     return H - 52;
   }
 
-  // ========= resize =========
   function resize(){
     const rect = canvas.getBoundingClientRect();
     DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -443,16 +422,14 @@
     ctx.setTransform(DPR,0,0,DPR,0,0);
     W = rect.width;
     H = rect.height;
-
     platforms = generatePlatforms(state.round);
   }
   window.addEventListener("resize", resize);
 
-  // ========= platforms =========
   function generatePlatforms(round){
     const p = [];
     const gY = groundY();
-    p.push({ x:0, y:gY, w:W, h:H-gY }); // ground
+    p.push({ x:0, y:gY, w:W, h:H-gY });
 
     const baseY = gY - 80;
     const drift = (round-1) * 6;
@@ -466,9 +443,8 @@
     return p;
   }
 
-  // ========= idea rain tuning =========
   function spawnConfig(){
-    let rate = 5.2 + (state.round-1) * 0.9;  // intentionally high
+    let rate = 5.2 + (state.round-1) * 0.9;
     if (state.upgrades.tppsIndia) rate += 2.2;
 
     let badP = 0.62, goodP = 0.33, diaP = 0.05;
@@ -510,7 +486,6 @@
     });
   }
 
-  // ========= collisions =========
   function aabb(ax,ay,aw,ah, bx,by,bw,bh){
     return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
   }
@@ -518,7 +493,6 @@
   function resolvePlayer(dt){
     player.onGround = false;
 
-    // X
     player.x += player.vx * dt;
     for (const pl of platforms){
       if (aabb(player.x, player.y, player.w, player.h, pl.x, pl.y, pl.w, pl.h)){
@@ -528,7 +502,6 @@
       }
     }
 
-    // Y
     player.y += player.vy * dt;
     for (const pl of platforms){
       if (aabb(player.x, player.y, player.w, player.h, pl.x, pl.y, pl.w, pl.h)){
@@ -554,7 +527,6 @@
     }
   }
 
-  // ========= catching =========
   function checkCatch(){
     const px = player.x + player.w/2;
     const py = player.y + player.h/2;
@@ -576,7 +548,6 @@
     return col.bad * 1 + col.good * 3 + col.diamond * 10;
   }
 
-  // ========= UI =========
   function updateHud(){
     roundTxt.textContent = state.round;
     walletTxt.textContent = state.wallet;
@@ -584,12 +555,10 @@
     goodTxt.textContent = state.collected.good;
     diaTxt.textContent = state.collected.diamond;
     missedTxt.textContent = state.missed;
-
     timerTxt.textContent = `${state.timeLeft.toFixed(1)}s`;
     timerTxt.classList.toggle("danger", state.timeLeft <= 7);
   }
 
-  // ========= shop overlay (BUG FIXED) =========
   function shopRowHTML(title, desc, cost, key){
     const owned = state.upgrades[key];
     const affordable = state.wallet >= cost;
@@ -607,7 +576,7 @@
   }
 
   function renderYearEndOverlay(){
-    const earned = state.yearEnd.payoutCoins; // already computed
+    const earned = state.yearEnd.payoutCoins;
     panel.innerHTML = `
       <header>
         <div>
@@ -681,7 +650,6 @@
       </div>
     `;
 
-    // hook buy buttons
     for (const key of ["tppsIndia","focusThemes","patentor"]){
       const btn = document.getElementById(`buy_${key}`);
       if (btn) btn.addEventListener("click", ()=>buyUpgrade(key));
@@ -701,14 +669,11 @@
     state.playing = false;
     state.yearEnd.active = true;
 
-    // ✅ payout computed and applied ONCE
     if (!state.yearEnd.payoutApplied){
       const earned = coinsFromCollected(state.collected);
       state.yearEnd.payoutCoins = earned;
-
       state.wallet += earned;
       state.totalCoinsEarned += earned;
-
       state.yearEnd.payoutApplied = true;
     }
 
@@ -723,11 +688,8 @@
     if (state.upgrades[key]) return;
     if (state.wallet < cost) return;
 
-    // ✅ buying only deducts coins and toggles flag (NO payouts here)
     state.wallet -= cost;
     state.upgrades[key] = true;
-
-    // re-render overlay WITHOUT changing wallet payout
     renderYearEndOverlay();
     updateHud();
   }
@@ -781,11 +743,9 @@
     state.totalIdeas = 0;
     state.totalCoinsEarned = 0;
     state.upgrades = { tppsIndia:false, focusThemes:false, patentor:false };
-
     resetRound();
   }
 
-  // ========= drawing =========
   function drawRoundedRect(x,y,w,h,r){
     ctx.beginPath();
     ctx.moveTo(x+r, y);
@@ -842,7 +802,6 @@
     ctx.restore();
   }
 
-  // ✅ clear “light bulb” icon
   function drawBulb(x,y,scale,type,phase){
     let glow, glass;
     if (type === "bad"){
@@ -862,7 +821,6 @@
     ctx.translate(x,y);
     ctx.rotate(wobble);
 
-    // glow
     ctx.globalAlpha = 0.60;
     ctx.fillStyle = glow;
     ctx.beginPath();
@@ -870,7 +828,6 @@
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    // bulb glass
     ctx.fillStyle = glass;
     ctx.strokeStyle = "rgba(255,255,255,.22)";
     ctx.lineWidth = 2;
@@ -879,7 +836,6 @@
     ctx.fill();
     ctx.stroke();
 
-    // highlight
     ctx.globalAlpha = 0.30;
     ctx.fillStyle = "rgba(255,255,255,.9)";
     ctx.beginPath();
@@ -887,7 +843,6 @@
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    // filament
     ctx.strokeStyle = "rgba(0,0,0,.30)";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -895,14 +850,12 @@
     ctx.quadraticCurveTo(0, 5*scale, 5*scale, -1*scale);
     ctx.stroke();
 
-    // base
     ctx.fillStyle = "rgba(0,0,0,.28)";
     drawRoundedRect(-8*scale, 12*scale, 16*scale, 8*scale, 3*scale);
     ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.10)";
     ctx.stroke();
 
-    // sparkle for diamond
     if (type === "diamond"){
       ctx.save();
       ctx.globalAlpha = 0.55;
@@ -921,7 +874,7 @@
 
   function drawIdeas(){
     for (const it of ideas){
-      drawBulb(it.x, it.y, it.type==="diamond" ? 1.12 : 1.05, it.type, it.phase);
+      drawBulb(it.x, it.y, it.type === "diamond" ? 1.12 : 1.05, it.type, it.phase);
     }
   }
 
@@ -929,7 +882,6 @@
     const x = player.x, y = player.y;
     ctx.save();
 
-    // shadow
     ctx.globalAlpha = 0.25;
     ctx.fillStyle = "black";
     ctx.beginPath();
@@ -937,7 +889,6 @@
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    // body
     const grad = ctx.createLinearGradient(x, y, x, y+player.h);
     grad.addColorStop(0, "rgba(106,228,255,.25)");
     grad.addColorStop(1, "rgba(255,255,255,.08)");
@@ -948,12 +899,10 @@
     ctx.fill();
     ctx.stroke();
 
-    // visor
     ctx.fillStyle = "rgba(0,0,0,.22)";
     drawRoundedRect(x+6, y+8, player.w-12, 14, 7);
     ctx.fill();
 
-    // badge
     ctx.fillStyle = "rgba(255,210,74,.55)";
     ctx.beginPath();
     ctx.arc(x + (player.facing>0 ? player.w-10 : 10), y+28, 4, 0, Math.PI*2);
@@ -970,7 +919,6 @@
     ctx.restore();
   }
 
-  // ========= round reset =========
   function resetRound(){
     state.playing = true;
     state.timeLeft = ROUND_TIME;
@@ -979,7 +927,6 @@
     ideas = [];
     spawnAcc = 0;
 
-    // reset year-end payout flags for new round
     state.yearEnd.active = false;
     state.yearEnd.payoutApplied = false;
     state.yearEnd.payoutCoins = 0;
@@ -997,7 +944,6 @@
     updateHud();
   }
 
-  // ========= main loop =========
   let last = performance.now();
 
   function update(dt){
@@ -1005,7 +951,6 @@
 
     t += dt;
 
-    // timer
     state.timeLeft -= dt;
     if (state.timeLeft <= 0){
       state.timeLeft = 0;
@@ -1014,7 +959,6 @@
       return;
     }
 
-    // movement
     const left = keys.has("a") || keys.has("arrowleft");
     const right = keys.has("d") || keys.has("arrowright");
 
@@ -1030,14 +974,11 @@
     }
     player.vx = clamp(player.vx, -MAX_SPEED, MAX_SPEED);
 
-    // gravity
     player.vy += GRAVITY * dt;
 
-    // coyote time
     if (player.onGround) player.coyote = COYOTE;
     else player.coyote = Math.max(0, player.coyote - dt);
 
-    // jump buffer
     jumpBuffer = Math.max(0, jumpBuffer - dt);
     if (jumpBuffer > 0 && (player.onGround || player.coyote > 0)){
       player.vy = -JUMP_V;
@@ -1048,7 +989,6 @@
 
     resolvePlayer(dt);
 
-    // idea rain
     const cfg = spawnConfig();
     spawnAcc += dt * cfg.rate;
     while (spawnAcc >= 1){
@@ -1056,7 +996,6 @@
       spawnAcc -= 1;
     }
 
-    // update ideas
     const gY = groundY();
     for (let i=ideas.length-1; i>=0; i--){
       const it = ideas[i];
@@ -1095,11 +1034,9 @@
     requestAnimationFrame(loop);
   }
 
-  // ========= start =========
   resize();
   resetRound();
   requestAnimationFrame(loop);
-
 })();
 </script>
 </body>
