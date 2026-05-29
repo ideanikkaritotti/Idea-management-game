@@ -6,6 +6,11 @@
   <title>Konecranes Innovation — Idea Rain</title>
 
   <style>
+    /* ==========================================================
+       EASY-TO-EDIT VISUAL SETTINGS
+       ----------------------------------------------------------
+       Change colors, panel sizes, and button positions here.
+       ========================================================== */
     :root{
       --bg1:#07111f;
       --bg2:#0b1c33;
@@ -20,7 +25,9 @@
       --ok:#7CFF92;
       --shadow: 0 18px 50px rgba(0,0,0,.45);
     }
+
     *{ box-sizing:border-box; }
+
     body{
       margin:0;
       height:100vh;
@@ -34,6 +41,7 @@
       padding:14px;
     }
 
+    /* Main game box */
     .wrap{
       width:min(900px, 96vw);
       height:min(560px, 86vh);
@@ -54,6 +62,7 @@
         radial-gradient(800px 400px at 50% 10%, rgba(106,228,255,.12), transparent 60%);
     }
 
+    /* Top heads-up display */
     .hud{
       position:absolute;
       inset:12px 12px auto 12px;
@@ -100,6 +109,7 @@
       text-shadow:0 0 16px rgba(255,93,108,.25);
     }
 
+    /* Overlay used for year-end shop and final score */
     .overlay{
       position:absolute;
       inset:0;
@@ -249,6 +259,7 @@
       margin-top:8px;
     }
 
+    /* Music button position */
     #musicBtn{
       position:absolute;
       top:12px;
@@ -264,8 +275,10 @@
 </head>
 <body>
   <div class="wrap">
+    <!-- Background music button. If Music.mp3 is missing, the game still works. -->
     <button id="musicBtn" class="btn secondary" type="button">🎵 Music: Off</button>
 
+    <!-- Optional background music file. Put Music.mp3 in the same folder as index.html -->
     <audio id="bgMusic" loop preload="auto">
       <source src="Music.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
@@ -309,9 +322,83 @@
 
 <script>
 (() => {
+  /* ==========================================================
+     MAIN CONFIG - EASIEST PLACE TO EDIT GAME BALANCE
+     ----------------------------------------------------------
+     Change values here to quickly tune the game without needing
+     to search through the rest of the code.
+     ========================================================== */
+  const CONFIG = {
+    // ----- Round structure -----
+    TOTAL_ROUNDS: 5,          // How many years / rounds the player plays
+    ROUND_TIME: 30.0,         // Seconds per round
+
+    // ----- Player movement -----
+    GRAVITY: 2100,
+    MOVE_ACC: 3000,
+    MAX_SPEED: 480,
+    FRICTION: 2400,
+    JUMP_V: 820,
+    COYOTE: 0.09,             // Small grace time after leaving a platform
+    JUMP_BUFFER: 0.10,        // Lets jump input happen slightly early
+
+    // ----- Rain spawn tuning -----
+    // baseRate = how many ideas per second in round 1
+    SPAWN_BASE_RATE: 5.2,
+    // extra ideas per second added for each later round
+    SPAWN_RATE_PER_ROUND: 0.9,
+
+    // ----- Idea type probabilities before upgrades -----
+    // These do NOT need to add to 1.0 exactly because the code normalizes them.
+    BAD_CHANCE: 0.62,
+    GOOD_CHANCE: 0.33,
+    DIAMOND_CHANCE: 0.05,
+
+    // ----- Fall speed tuning -----
+    FALL_MIN_BASE: 240,
+    FALL_MAX_BASE: 420,
+    FALL_MIN_PER_ROUND: 18,
+    FALL_MAX_PER_ROUND: 24,
+
+    // ----- Upgrade costs -----
+    COST_TPPS_INDIA: 50,
+    COST_FOCUS_THEMES: 50,
+    COST_PATENTOR: 100,
+
+    // ----- Upgrade effects -----
+    // More rain in future rounds
+    TPPS_INDIA_EXTRA_RATE: 2.2,
+    // More good ideas, fewer bad ideas
+    FOCUS_GOOD_BONUS: 0.18,
+    FOCUS_BAD_PENALTY: -0.18,
+    // More diamonds, slightly fewer bad/good
+    PATENTOR_DIAMOND_BONUS: 0.08,
+    PATENTOR_BAD_SHIFT: -0.05,
+    PATENTOR_GOOD_SHIFT: -0.03,
+
+    // ----- Score / wallet values -----
+    COINS_BAD: 1,
+    COINS_GOOD: 3,
+    COINS_DIAMOND: 10,
+
+    // ----- Sound effect loudness -----
+    SFX_VOLUME_BAD: 0.045,
+    SFX_VOLUME_GOOD: 0.055,
+    SFX_VOLUME_DIAMOND: 0.07,
+
+    // ----- Background music volume -----
+    MUSIC_VOLUME: 0.35
+  };
+
+  /* ==========================================================
+     HELPERS
+     ========================================================== */
   const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
   const rand = (a,b)=>a+Math.random()*(b-a);
 
+  /* ==========================================================
+     CANVAS + DOM REFERENCES
+     ========================================================== */
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
   let W = 900, H = 560, DPR = 1;
@@ -328,7 +415,13 @@
   const bgMusic = document.getElementById("bgMusic");
   const musicBtn = document.getElementById("musicBtn");
 
-  bgMusic.volume = 0.35;
+  /* ==========================================================
+     OPTIONAL BACKGROUND MUSIC
+     ----------------------------------------------------------
+     If Music.mp3 is not found on GitHub Pages, the game still works.
+     Only the music button is affected.
+     ========================================================== */
+  bgMusic.volume = CONFIG.MUSIC_VOLUME;
 
   async function toggleMusic(){
     try{
@@ -341,6 +434,7 @@
       }
     } catch (err) {
       console.log("Could not play music:", err);
+      musicBtn.textContent = "🎵 Music Error";
     }
   }
 
@@ -349,17 +443,82 @@
     toggleMusic();
   });
 
-  const GRAVITY = 2100;
-  const MOVE_ACC = 3000;
-  const MAX_SPEED = 480;
-  const FRICTION = 2400;
-  const JUMP_V = 820;
-  const COYOTE = 0.09;
-  const JUMP_BUFFER = 0.10;
+  /* ==========================================================
+     COLLECT SOUND EFFECT
+     ----------------------------------------------------------
+     This uses the Web Audio API, so you do NOT need a separate
+     .mp3 file for the collect sound.
 
-  const ROUND_TIME = 30.0;
-  const TOTAL_ROUNDS = 5;
+     Easy tuning points:
+     - startFreq / endFreq = pitch
+     - volume = loudness
+     - duration = length of the sound
+     ========================================================== */
+  let audioCtx = null;
 
+  function getAudioContext(){
+    if (!audioCtx){
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    }
+    return audioCtx;
+  }
+
+  function playCollectSfx(type){
+    const ctxAudio = getAudioContext();
+    if (!ctxAudio) return;
+
+    if (ctxAudio.state === "suspended") {
+      ctxAudio.resume().catch(() => {});
+    }
+
+    const now = ctxAudio.currentTime;
+    const osc = ctxAudio.createOscillator();
+    const gain = ctxAudio.createGain();
+
+    // Default sound = bad idea pickup
+    let startFreq = 700;
+    let endFreq = 980;
+    let volume = CONFIG.SFX_VOLUME_BAD;
+    let duration = 0.08;
+    let wave = "triangle";
+
+    // Better idea = slightly brighter sound
+    if (type === "good") {
+      startFreq = 820;
+      endFreq = 1180;
+      volume = CONFIG.SFX_VOLUME_GOOD;
+      duration = 0.09;
+      wave = "triangle";
+    }
+
+    // Diamond = brightest / nicest sound
+    if (type === "diamond") {
+      startFreq = 980;
+      endFreq = 1520;
+      volume = CONFIG.SFX_VOLUME_DIAMOND;
+      duration = 0.12;
+      wave = "sine";
+    }
+
+    osc.type = wave;
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc.connect(gain);
+    gain.connect(ctxAudio.destination);
+
+    osc.start(now);
+    osc.stop(now + duration + 0.015);
+  }
+
+  /* ==========================================================
+     GAME STATE
+     ========================================================== */
   const state = {
     round: 1,
     wallet: 0,
@@ -371,7 +530,7 @@
       patentor: false
     },
     playing: true,
-    timeLeft: ROUND_TIME,
+    timeLeft: CONFIG.ROUND_TIME,
     collected: { bad:0, good:0, diamond:0 },
     missed: 0,
     yearEnd: {
@@ -381,18 +540,24 @@
     }
   };
 
+  /* ==========================================================
+     INPUT
+     ========================================================== */
   const keys = new Set();
   let jumpBuffer = 0;
 
   window.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
     keys.add(k);
-    if (k === " " || k === "w" || k === "arrowup") jumpBuffer = JUMP_BUFFER;
+    if (k === " " || k === "w" || k === "arrowup") jumpBuffer = CONFIG.JUMP_BUFFER;
     if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) e.preventDefault();
   }, { passive:false });
 
   window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 
+  /* ==========================================================
+     PLAYER
+     ========================================================== */
   const player = {
     x: 80,
     y: 0,
@@ -405,6 +570,9 @@
     facing: 1
   };
 
+  /* ==========================================================
+     WORLD DATA
+     ========================================================== */
   let platforms = [];
   let ideas = [];
   let spawnAcc = 0;
@@ -414,6 +582,9 @@
     return H - 52;
   }
 
+  /* ==========================================================
+     RESIZE
+     ========================================================== */
   function resize(){
     const rect = canvas.getBoundingClientRect();
     DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -426,10 +597,16 @@
   }
   window.addEventListener("resize", resize);
 
+  /* ==========================================================
+     PLATFORM LAYOUT
+     ----------------------------------------------------------
+     You can change these platform positions manually if you want
+     a different obstacle layout.
+     ========================================================== */
   function generatePlatforms(round){
     const p = [];
     const gY = groundY();
-    p.push({ x:0, y:gY, w:W, h:H-gY });
+    p.push({ x:0, y:gY, w:W, h:H-gY }); // ground
 
     const baseY = gY - 80;
     const drift = (round-1) * 6;
@@ -443,23 +620,50 @@
     return p;
   }
 
+  /* ==========================================================
+     IDEA RAIN LOGIC
+     ----------------------------------------------------------
+     THIS IS THE MOST IMPORTANT SECTION for changing how much
+     rain there is.
+
+     To make more ideas fall:
+     - increase CONFIG.SPAWN_BASE_RATE
+     - increase CONFIG.SPAWN_RATE_PER_ROUND
+     - increase CONFIG.TPPS_INDIA_EXTRA_RATE
+
+     To make fewer ideas fall:
+     - reduce those same values
+     ========================================================== */
   function spawnConfig(){
-    let rate = 5.2 + (state.round-1) * 0.9;
-    if (state.upgrades.tppsIndia) rate += 2.2;
+    let rate = CONFIG.SPAWN_BASE_RATE + (state.round-1) * CONFIG.SPAWN_RATE_PER_ROUND;
+    if (state.upgrades.tppsIndia) rate += CONFIG.TPPS_INDIA_EXTRA_RATE;
 
-    let badP = 0.62, goodP = 0.33, diaP = 0.05;
+    let badP = CONFIG.BAD_CHANCE;
+    let goodP = CONFIG.GOOD_CHANCE;
+    let diaP = CONFIG.DIAMOND_CHANCE;
 
-    if (state.upgrades.focusThemes){ goodP += 0.18; badP -= 0.18; }
-    if (state.upgrades.patentor){ diaP += 0.08; badP -= 0.05; goodP -= 0.03; }
+    if (state.upgrades.focusThemes){
+      goodP += CONFIG.FOCUS_GOOD_BONUS;
+      badP += CONFIG.FOCUS_BAD_PENALTY;
+    }
 
+    if (state.upgrades.patentor){
+      diaP += CONFIG.PATENTOR_DIAMOND_BONUS;
+      badP += CONFIG.PATENTOR_BAD_SHIFT;
+      goodP += CONFIG.PATENTOR_GOOD_SHIFT;
+    }
+
+    // Keep the values within sensible minimums
     badP = Math.max(0.08, badP);
     goodP = Math.max(0.10, goodP);
     diaP = Math.max(0.02, diaP);
+
+    // Normalize so they work as probability weights
     const sum = badP + goodP + diaP;
     badP/=sum; goodP/=sum; diaP/=sum;
 
-    const fallMin = 240 + (state.round-1)*18;
-    const fallMax = 420 + (state.round-1)*24;
+    const fallMin = CONFIG.FALL_MIN_BASE + (state.round-1) * CONFIG.FALL_MIN_PER_ROUND;
+    const fallMax = CONFIG.FALL_MAX_BASE + (state.round-1) * CONFIG.FALL_MAX_PER_ROUND;
 
     return { rate, badP, goodP, diaP, fallMin, fallMax };
   }
@@ -486,6 +690,9 @@
     });
   }
 
+  /* ==========================================================
+     COLLISIONS
+     ========================================================== */
   function aabb(ax,ay,aw,ah, bx,by,bw,bh){
     return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
   }
@@ -493,6 +700,7 @@
   function resolvePlayer(dt){
     player.onGround = false;
 
+    // Horizontal movement + wall/platform collision
     player.x += player.vx * dt;
     for (const pl of platforms){
       if (aabb(player.x, player.y, player.w, player.h, pl.x, pl.y, pl.w, pl.h)){
@@ -502,6 +710,7 @@
       }
     }
 
+    // Vertical movement + floor/platform collision
     player.y += player.vy * dt;
     for (const pl of platforms){
       if (aabb(player.x, player.y, player.w, player.h, pl.x, pl.y, pl.w, pl.h)){
@@ -509,7 +718,7 @@
           player.y = pl.y - player.h;
           player.vy = 0;
           player.onGround = true;
-          player.coyote = COYOTE;
+          player.coyote = CONFIG.COYOTE;
         } else if (player.vy < 0){
           player.y = pl.y + pl.h;
           player.vy = 0;
@@ -518,6 +727,8 @@
     }
 
     player.x = clamp(player.x, 0, W - player.w);
+
+    // Respawn if player falls off-screen
     if (player.y > H + 160){
       player.x = 80;
       player.y = groundY() - player.h - 10;
@@ -527,6 +738,11 @@
     }
   }
 
+  /* ==========================================================
+     CATCHING IDEAS
+     ----------------------------------------------------------
+     A sound effect is played every time the player catches one.
+     ========================================================== */
   function checkCatch(){
     const px = player.x + player.w/2;
     const py = player.y + player.h/2;
@@ -539,15 +755,19 @@
       if (dx*dx + dy*dy < rr*rr){
         state.collected[it.type]++;
         state.totalIdeas++;
+        playCollectSfx(it.type);
         ideas.splice(i,1);
       }
     }
   }
 
   function coinsFromCollected(col){
-    return col.bad * 1 + col.good * 3 + col.diamond * 10;
+    return col.bad * CONFIG.COINS_BAD + col.good * CONFIG.COINS_GOOD + col.diamond * CONFIG.COINS_DIAMOND;
   }
 
+  /* ==========================================================
+     HUD UPDATE
+     ========================================================== */
   function updateHud(){
     roundTxt.textContent = state.round;
     walletTxt.textContent = state.wallet;
@@ -559,6 +779,9 @@
     timerTxt.classList.toggle("danger", state.timeLeft <= 7);
   }
 
+  /* ==========================================================
+     SHOP UI
+     ========================================================== */
   function shopRowHTML(title, desc, cost, key){
     const owned = state.upgrades[key];
     const affordable = state.wallet >= cost;
@@ -580,7 +803,7 @@
     panel.innerHTML = `
       <header>
         <div>
-          <h2>Year End Review — Round ${state.round}/${TOTAL_ROUNDS}</h2>
+          <h2>Year End Review — Round ${state.round}/${CONFIG.TOTAL_ROUNDS}</h2>
           <div class="sub">
             Idea rain season is over. Coins are paid based on the quality you caught before ideas hit the ground.
           </div>
@@ -595,13 +818,13 @@
         <div class="card">
           <h3>Results</h3>
           <ul class="list">
-            <li><b>Bad ideas</b>: ${state.collected.bad} × 1 coin</li>
-            <li><b>Good ideas</b>: ${state.collected.good} × 3 coins</li>
-            <li><b>Diamond ideas</b>: ${state.collected.diamond} × 10 coins</li>
+            <li><b>Bad ideas</b>: ${state.collected.bad} × ${CONFIG.COINS_BAD} coin(s)</li>
+            <li><b>Good ideas</b>: ${state.collected.good} × ${CONFIG.COINS_GOOD} coin(s)</li>
+            <li><b>Diamond ideas</b>: ${state.collected.diamond} × ${CONFIG.COINS_DIAMOND} coin(s)</li>
             <li><b>Missed (hit the ground)</b>: ${state.missed}</li>
           </ul>
           <div class="tiny">
-            Spawn rate is intentionally high — it’s designed so you can’t catch everything.
+            The rain is intentionally heavy, so the game feels hectic.
           </div>
         </div>
 
@@ -620,22 +843,22 @@
 
         ${shopRowHTML(
           "Set idea quantity TPPs to India",
-          "Cost: 50 coins — Result: <b>more ideas rain</b> in the next rounds.",
-          50,
+          `Cost: ${CONFIG.COST_TPPS_INDIA} coins — Result: <b>more ideas rain</b> in the next rounds.`,
+          CONFIG.COST_TPPS_INDIA,
           "tppsIndia"
         )}
 
         ${shopRowHTML(
           "Select innovation focus themes",
-          "Cost: 50 coins — Result: <b>more good ideas</b> in the next rounds.",
-          50,
+          `Cost: ${CONFIG.COST_FOCUS_THEMES} coins — Result: <b>more good ideas</b> in the next rounds.`,
+          CONFIG.COST_FOCUS_THEMES,
           "focusThemes"
         )}
 
         ${shopRowHTML(
           "Hire an idea patentor",
-          "Cost: 100 coins — Result: <b>more diamond ideas</b> in the next rounds.",
-          100,
+          `Cost: ${CONFIG.COST_PATENTOR} coins — Result: <b>more diamond ideas</b> in the next rounds.`,
+          CONFIG.COST_PATENTOR,
           "patentor"
         )}
 
@@ -646,7 +869,7 @@
 
       <div class="footerActions">
         <button class="btn secondary" id="btnReplay">Restart Game</button>
-        <button class="btn" id="btnNext">${state.round < TOTAL_ROUNDS ? "Start Next Year →" : "Finish Game →"}</button>
+        <button class="btn" id="btnNext">${state.round < CONFIG.TOTAL_ROUNDS ? "Start Next Year →" : "Finish Game →"}</button>
       </div>
     `;
 
@@ -657,7 +880,7 @@
 
     document.getElementById("btnReplay").addEventListener("click", restartGame);
     document.getElementById("btnNext").addEventListener("click", () => {
-      if (state.round >= TOTAL_ROUNDS) showFinal();
+      if (state.round >= CONFIG.TOTAL_ROUNDS) showFinal();
       else {
         state.round++;
         resetRound();
@@ -669,6 +892,7 @@
     state.playing = false;
     state.yearEnd.active = true;
 
+    // Only apply the year-end payout once
     if (!state.yearEnd.payoutApplied){
       const earned = coinsFromCollected(state.collected);
       state.yearEnd.payoutCoins = earned;
@@ -683,7 +907,12 @@
   }
 
   function buyUpgrade(key){
-    const costs = { tppsIndia:50, focusThemes:50, patentor:100 };
+    const costs = {
+      tppsIndia: CONFIG.COST_TPPS_INDIA,
+      focusThemes: CONFIG.COST_FOCUS_THEMES,
+      patentor: CONFIG.COST_PATENTOR
+    };
+
     const cost = costs[key] ?? 99999;
     if (state.upgrades[key]) return;
     if (state.wallet < cost) return;
@@ -746,6 +975,9 @@
     resetRound();
   }
 
+  /* ==========================================================
+     DRAWING HELPERS
+     ========================================================== */
   function drawRoundedRect(x,y,w,h,r){
     ctx.beginPath();
     ctx.moveTo(x+r, y);
@@ -802,6 +1034,9 @@
     ctx.restore();
   }
 
+  /* ==========================================================
+     IDEA VISUALS
+     ========================================================== */
   function drawBulb(x,y,scale,type,phase){
     let glow, glass;
     if (type === "bad"){
@@ -915,13 +1150,16 @@
     ctx.save();
     ctx.fillStyle = "rgba(255,255,255,.10)";
     ctx.font = "700 12px ui-sans-serif, system-ui";
-    ctx.fillText("Idea Rain — catch bulbs before they hit the ground. (Designed to be impossible to catch all.)", 14, H-14);
+    ctx.fillText("Idea Rain — catch bulbs before they hit the ground.", 14, H-14);
     ctx.restore();
   }
 
+  /* ==========================================================
+     ROUND RESET
+     ========================================================== */
   function resetRound(){
     state.playing = true;
-    state.timeLeft = ROUND_TIME;
+    state.timeLeft = CONFIG.ROUND_TIME;
     state.collected = { bad:0, good:0, diamond:0 };
     state.missed = 0;
     ideas = [];
@@ -944,6 +1182,9 @@
     updateHud();
   }
 
+  /* ==========================================================
+     GAME LOOP
+     ========================================================== */
   let last = performance.now();
 
   function update(dt){
@@ -951,6 +1192,7 @@
 
     t += dt;
 
+    // Round timer
     state.timeLeft -= dt;
     if (state.timeLeft <= 0){
       state.timeLeft = 0;
@@ -959,29 +1201,33 @@
       return;
     }
 
+    // Horizontal movement
     const left = keys.has("a") || keys.has("arrowleft");
     const right = keys.has("d") || keys.has("arrowright");
 
     if (left && !right){
-      player.vx -= MOVE_ACC * dt;
+      player.vx -= CONFIG.MOVE_ACC * dt;
       player.facing = -1;
     } else if (right && !left){
-      player.vx += MOVE_ACC * dt;
+      player.vx += CONFIG.MOVE_ACC * dt;
       player.facing = 1;
     } else {
-      if (player.vx > 0) player.vx = Math.max(0, player.vx - FRICTION * dt);
-      if (player.vx < 0) player.vx = Math.min(0, player.vx + FRICTION * dt);
+      if (player.vx > 0) player.vx = Math.max(0, player.vx - CONFIG.FRICTION * dt);
+      if (player.vx < 0) player.vx = Math.min(0, player.vx + CONFIG.FRICTION * dt);
     }
-    player.vx = clamp(player.vx, -MAX_SPEED, MAX_SPEED);
+    player.vx = clamp(player.vx, -CONFIG.MAX_SPEED, CONFIG.MAX_SPEED);
 
-    player.vy += GRAVITY * dt;
+    // Gravity
+    player.vy += CONFIG.GRAVITY * dt;
 
-    if (player.onGround) player.coyote = COYOTE;
+    // Coyote time
+    if (player.onGround) player.coyote = CONFIG.COYOTE;
     else player.coyote = Math.max(0, player.coyote - dt);
 
+    // Buffered jump
     jumpBuffer = Math.max(0, jumpBuffer - dt);
     if (jumpBuffer > 0 && (player.onGround || player.coyote > 0)){
-      player.vy = -JUMP_V;
+      player.vy = -CONFIG.JUMP_V;
       player.onGround = false;
       player.coyote = 0;
       jumpBuffer = 0;
@@ -989,6 +1235,7 @@
 
     resolvePlayer(dt);
 
+    // Spawn idea rain
     const cfg = spawnConfig();
     spawnAcc += dt * cfg.rate;
     while (spawnAcc >= 1){
@@ -996,6 +1243,7 @@
       spawnAcc -= 1;
     }
 
+    // Update idea movement
     const gY = groundY();
     for (let i=ideas.length-1; i>=0; i--){
       const it = ideas[i];
@@ -1007,6 +1255,7 @@
       if (it.x < 10){ it.x = 10; it.vx *= -0.4; }
       if (it.x > W-10){ it.x = W-10; it.vx *= -0.4; }
 
+      // Missed idea reaches the ground
       if (it.y > gY - it.r){
         state.missed++;
         ideas.splice(i,1);
@@ -1034,6 +1283,9 @@
     requestAnimationFrame(loop);
   }
 
+  /* ==========================================================
+     START GAME
+     ========================================================== */
   resize();
   resetRound();
   requestAnimationFrame(loop);
