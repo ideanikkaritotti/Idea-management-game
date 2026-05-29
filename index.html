@@ -328,26 +328,48 @@
   const bgMusic = document.getElementById("bgMusic");
   const musicBtn = document.getElementById("musicBtn");
 
-  bgMusic.volume = 0.35;
+  
+bgMusic.volume = CONFIG.MUSIC_VOLUME;
 
-  async function toggleMusic(){
-    try{
-      if (bgMusic.paused){
-        await bgMusic.play();
-        musicBtn.textContent = "🎵 Music: On";
-      } else {
-        bgMusic.pause();
-        musicBtn.textContent = "🎵 Music: Off";
-      }
-    } catch (err) {
-      console.log("Could not play music:", err);
+// Debug helpers so we can see whether the file loads or fails
+bgMusic.addEventListener("loadeddata", () => {
+  console.log("Music file loaded successfully.");
+});
+
+bgMusic.addEventListener("canplaythrough", () => {
+  console.log("Music file can play through.");
+});
+
+bgMusic.addEventListener("error", (e) => {
+  console.log("Music file failed to load.", e);
+  musicBtn.textContent = "🎵 Music Error";
+});
+
+async function toggleMusic(){
+  console.log("Music button clicked.");
+
+  try {
+    if (bgMusic.paused) {
+      musicBtn.textContent = "🎵 Loading...";
+      await bgMusic.play();
+      musicBtn.textContent = "🎵 Music: On";
+      console.log("Music started.");
+    } else {
+      bgMusic.pause();
+      musicBtn.textContent = "🎵 Music: Off";
+      console.log("Music paused.");
     }
+  } catch (err) {
+    console.log("Could not play music:", err);
+    musicBtn.textContent = "🎵 Music Error";
   }
+}
 
-  musicBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleMusic();
-  });
+musicBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleMusic();
+});
+
 
   const GRAVITY = 2100;
   const MOVE_ACC = 3000;
